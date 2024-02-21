@@ -1,0 +1,71 @@
+﻿--1
+DECLARE @StartDate DATE = DATEADD(day, -30, GETDATE());
+DECLARE @EndDate DATE = GETDATE();
+
+SELECT SUM(vd.TotalLinea) AS MontoTotal, SUM(vd.Cantidad) AS CantidadTotal 
+FROM VentaDetalle  AS vd
+INNER JOIN Venta AS v ON vd.ID_Venta  = v.ID_Venta 
+WHERE v.Fecha >= @StartDate AND v.Fecha <= @EndDate;
+
+--2
+SELECT TOP 1 v.Fecha AS FechaVentaMontoMayor
+FROM VentaDetalle AS vd
+INNER JOIN Venta AS v ON vd.ID_Venta  = v.ID_Venta
+WHERE v.Fecha >= @StartDate AND v.Fecha <= @EndDate
+ORDER BY v.Total  DESC;
+
+--3
+
+SELECT TOP 1 p.Nombre AS ProductoMontoTotalMayor
+FROM VentaDetalle AS vd
+INNER JOIN Producto AS p ON vd.ID_Producto  = p.ID_Producto 
+INNER JOIN Venta AS v ON vd.ID_Venta  = v.ID_Venta 
+WHERE v.Fecha >= @StartDate AND v.Fecha <= @EndDate
+ORDER BY vd.TotalLinea DESC;
+
+
+--4
+
+SELECT TOP 1 l.Nombre AS LocalMontoMayorVenta
+FROM VentaDetalle AS vd
+INNER JOIN Venta AS v ON vd.ID_Venta  = v.ID_Venta 
+INNER JOIN Local AS l ON v.ID_Local  = l.ID_Local 
+WHERE v.Fecha >= @StartDate AND v.Fecha <= @EndDate
+ORDER BY v.Total DESC;
+
+
+--5
+
+SELECT TOP 1 m.Nombre AS MarcaMayorMargenGanancias
+FROM VentaDetalle AS vd
+INNER JOIN Producto AS p ON vd.ID_Producto  = p.ID_Producto
+INNER JOIN Marca AS m ON p.ID_Marca  = m.ID_Marca 
+INNER JOIN Venta AS v ON vd.ID_Venta  = v.ID_Venta 
+WHERE v.Fecha >= @StartDate AND v.Fecha <= @EndDate
+ORDER BY ((vd.Cantidad * vd.Precio_Unitario  - vd.Cantidad) * p.Costo_Unitario) DESC;
+
+--6
+SELECT 
+    Local,
+    Producto,
+    CantidadTotal
+FROM (
+    SELECT 
+        l.Nombre AS Local,
+        p.Nombre AS Producto,
+        SUM(vd.Cantidad) AS CantidadTotal,
+        ROW_NUMBER() OVER (PARTITION BY l.Nombre ORDER BY SUM(vd.Cantidad) DESC) AS RNUM
+    FROM 
+        VentaDetalle AS vd
+    INNER JOIN Venta AS v ON vd.ID_Venta = v.ID_Venta
+    INNER JOIN Local AS l ON v.ID_Local = l.ID_Local
+    INNER JOIN Producto AS p ON vd.ID_Producto = p.ID_Producto
+    WHERE 
+        v.Fecha >= @StartDate AND v.Fecha <= @EndDate
+    GROUP BY 
+        l.Nombre, p.Nombre
+) AS Subquery
+WHERE 
+    RNUM = 1;
+
+
