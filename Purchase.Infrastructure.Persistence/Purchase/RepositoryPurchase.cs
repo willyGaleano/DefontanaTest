@@ -15,9 +15,7 @@ namespace Purchase.Infrastructure.Persistence.Purchase
         public async Task<List<VentaDetalle>> GetSalesByLastDays(int days)
         {
             var startDate = DateTime.Now.AddDays(-days);
-            var endDate = DateTime.Now;
-            Console.WriteLine($"STARTDATE: {startDate}");
-            Console.WriteLine($"ENDDATE: {endDate}");
+            var endDate = DateTime.Now;           
 
             var sales = await _pruebaContext.VentaDetalles
                         .Where(vd => vd.IdVentaNavigation.Fecha >= startDate 
